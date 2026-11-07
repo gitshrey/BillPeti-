@@ -107,78 +107,11 @@ jobs:
                   with open(target_file, "wb") as f:
                       f.write(icon_bytes)
           print("Custom BillKhata launcher icon installed across all Android mipmap folders")
-
           main_act_dir = "android/app/src/main/java/com/billkhata/shopapp"
           os.makedirs(main_act_dir, exist_ok=True)
-          main_act_java = '''package com.billkhata.shopapp;
-
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.util.Base64;
-import android.webkit.JavascriptInterface;
-import android.widget.Toast;
-import com.getcapacitor.BridgeActivity;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-
-public class MainActivity extends BridgeActivity {
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (this.bridge != null && this.bridge.getWebView() != null) {
-            this.bridge.getWebView().addJavascriptInterface(new AndroidDownloader(), "AndroidDownloader");
-        }
-    }
-
-    public class AndroidDownloader {
-        @JavascriptInterface
-        public String saveBase64ToDownloads(String base64Data, String fileName, String mimeType) {
-            try {
-                byte[] bytes = Base64.decode(base64Data, Base64.DEFAULT);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    ContentValues values = new ContentValues();
-                    values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
-                    values.put(MediaStore.Downloads.MIME_TYPE, mimeType != null ? mimeType : "text/csv");
-                    values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-                    ContentResolver resolver = getContentResolver();
-                    Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-                    if (uri != null) {
-                        try (OutputStream out = resolver.openOutputStream(uri)) {
-                            if (out != null) {
-                                out.write(bytes);
-                                out.flush();
-                            }
-                        }
-                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "Saved in Downloads: " + fileName, Toast.LENGTH_LONG).show());
-                        return "Downloads/" + fileName;
-                    }
-                } else {
-                    File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                    if (!dir.exists()) dir.mkdirs();
-                    File outFile = new File(dir, fileName);
-                    try (FileOutputStream fos = new FileOutputStream(outFile)) {
-                        fos.write(bytes);
-                        fos.flush();
-                    }
-                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Saved in Downloads: " + fileName, Toast.LENGTH_LONG).show());
-                    return outFile.getAbsolutePath();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return "";
-        }
-    }
-}
-'''
-          with open(os.path.join(main_act_dir, "MainActivity.java"), "w") as mf:
-              mf.write(main_act_java)
+          main_act_b64 = "cGFja2FnZSBjb20uYmlsbGtoYXRhLnNob3BhcHA7CgppbXBvcnQgYW5kcm9pZC5jb250ZW50LkNvbnRlbnRSZXNvbHZlcjsKaW1wb3J0IGFuZHJvaWQuY29udGVudC5Db250ZW50VmFsdWVzOwppbXBvcnQgYW5kcm9pZC5uZXQuVXJpOwppbXBvcnQgYW5kcm9pZC5vcy5CdWlsZDsKaW1wb3J0IGFuZHJvaWQub3MuQnVuZGxlOwppbXBvcnQgYW5kcm9pZC5vcy5FbnZpcm9ubWVudDsKaW1wb3J0IGFuZHJvaWQucHJvdmlkZXIuTWVkaWFTdG9yZTsKaW1wb3J0IGFuZHJvaWQudXRpbC5CYXNlNjQ7CmltcG9ydCBhbmRyb2lkLndlYmtpdC5KYXZhc2NyaXB0SW50ZXJmYWNlOwppbXBvcnQgYW5kcm9pZC53aWRnZXQuVG9hc3Q7CmltcG9ydCBjb20uZ2V0Y2FwYWNpdG9yLkJyaWRnZUFjdGl2aXR5OwppbXBvcnQgamF2YS5pby5GaWxlOwppbXBvcnQgamF2YS5pby5GaWxlT3V0cHV0U3RyZWFtOwppbXBvcnQgamF2YS5pby5PdXRwdXRTdHJlYW07CgpwdWJsaWMgY2xhc3MgTWFpbkFjdGl2aXR5IGV4dGVuZHMgQnJpZGdlQWN0aXZpdHkgewogICAgQE92ZXJyaWRlCiAgICBwdWJsaWMgdm9pZCBvbkNyZWF0ZShCdW5kbGUgc2F2ZWRJbnN0YW5jZVN0YXRlKSB7CiAgICAgICAgc3VwZXIub25DcmVhdGUoc2F2ZWRJbnN0YW5jZVN0YXRlKTsKICAgICAgICBpZiAodGhpcy5icmlkZ2UgIT0gbnVsbCAmJiB0aGlzLmJyaWRnZS5nZXRXZWJWaWV3KCkgIT0gbnVsbCkgewogICAgICAgICAgICB0aGlzLmJyaWRnZS5nZXRXZWJWaWV3KCkuYWRkSmF2YXNjcmlwdEludGVyZmFjZShuZXcgQW5kcm9pZERvd25sb2FkZXIoKSwgIkFuZHJvaWREb3dubG9hZGVyIik7CiAgICAgICAgfQogICAgfQoKICAgIHB1YmxpYyBjbGFzcyBBbmRyb2lkRG93bmxvYWRlciB7CiAgICAgICAgQEphdmFzY3JpcHRJbnRlcmZhY2UKICAgICAgICBwdWJsaWMgU3RyaW5nIHNhdmVCYXNlNjRUb0Rvd25sb2FkcyhTdHJpbmcgYmFzZTY0RGF0YSwgU3RyaW5nIGZpbGVOYW1lLCBTdHJpbmcgbWltZVR5cGUpIHsKICAgICAgICAgICAgdHJ5IHsKICAgICAgICAgICAgICAgIGJ5dGVbXSBieXRlcyA9IEJhc2U2NC5kZWNvZGUoYmFzZTY0RGF0YSwgQmFzZTY0LkRFRkFVTFQpOwogICAgICAgICAgICAgICAgaWYgKEJ1aWxkLlZFUlNJT04uU0RLX0lOVCA+PSBCdWlsZC5WRVJTSU9OX0NPREVTLlEpIHsKICAgICAgICAgICAgICAgICAgICBDb250ZW50VmFsdWVzIHZhbHVlcyA9IG5ldyBDb250ZW50VmFsdWVzKCk7CiAgICAgICAgICAgICAgICAgICAgdmFsdWVzLnB1dChNZWRpYVN0b3JlLkRvd25sb2Fkcy5ESVNQTEFZX05BTUUsIGZpbGVOYW1lKTsKICAgICAgICAgICAgICAgICAgICB2YWx1ZXMucHV0KE1lZGlhU3RvcmUuRG93bmxvYWRzLk1JTUVfVFlQRSwgbWltZVR5cGUgIT0gbnVsbCA/IG1pbWVUeXBlIDogInRleHQvY3N2Iik7CiAgICAgICAgICAgICAgICAgICAgdmFsdWVzLnB1dChNZWRpYVN0b3JlLkRvd25sb2Fkcy5SRUxBVElWRV9QQVRILCBFbnZpcm9ubWVudC5ESVJFQ1RPUllfRE9XTkxPQURTKTsKICAgICAgICAgICAgICAgICAgICBDb250ZW50UmVzb2x2ZXIgcmVzb2x2ZXIgPSBnZXRDb250ZW50UmVzb2x2ZXIoKTsKICAgICAgICAgICAgICAgICAgICBVcmkgdXJpID0gcmVzb2x2ZXIuaW5zZXJ0KE1lZGlhU3RvcmUuRG93bmxvYWRzLkVYVEVSTkFMX0NPTlRFTlRfVVJJLCB2YWx1ZXMpOwogICAgICAgICAgICAgICAgICAgIGlmICh1cmkgIT0gbnVsbCkgewogICAgICAgICAgICAgICAgICAgICAgICB0cnkgKE91dHB1dFN0cmVhbSBvdXQgPSByZXNvbHZlci5vcGVuT3V0cHV0U3RyZWFtKHVyaSkpIHsKICAgICAgICAgICAgICAgICAgICAgICAgICAgIGlmIChvdXQgIT0gbnVsbCkgewogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIG91dC53cml0ZShieXRlcyk7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgb3V0LmZsdXNoKCk7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgICAgICAgICAgcnVuT25VaVRocmVhZCgoKSAtPiBUb2FzdC5tYWtlVGV4dChNYWluQWN0aXZpdHkudGhpcywgIlNhdmVkIGluIERvd25sb2FkczogIiArIGZpbGVOYW1lLCBUb2FzdC5MRU5HVEhfTE9ORykuc2hvdygpKTsKICAgICAgICAgICAgICAgICAgICAgICAgcmV0dXJuICJEb3dubG9hZHMvIiArIGZpbGVOYW1lOwogICAgICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgICAgICAgICAgRmlsZSBkaXIgPSBFbnZpcm9ubWVudC5nZXRFeHRlcm5hbFN0b3JhZ2VQdWJsaWNEaXJlY3RvcnkoRW52aXJvbm1lbnQuRElSRUNUT1JZX0RPV05MT0FEUyk7CiAgICAgICAgICAgICAgICAgICAgaWYgKCFkaXIuZXhpc3RzKCkpIGRpci5ta2RpcnMoKTsKICAgICAgICAgICAgICAgICAgICBGaWxlIG91dEZpbGUgPSBuZXcgRmlsZShkaXIsIGZpbGVOYW1lKTsKICAgICAgICAgICAgICAgICAgICB0cnkgKEZpbGVPdXRwdXRTdHJlYW0gZm9zID0gbmV3IEZpbGVPdXRwdXRTdHJlYW0ob3V0RmlsZSkpIHsKICAgICAgICAgICAgICAgICAgICAgICAgZm9zLndyaXRlKGJ5dGVzKTsKICAgICAgICAgICAgICAgICAgICAgICAgZm9zLmZsdXNoKCk7CiAgICAgICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgICAgIHJ1bk9uVWlUaHJlYWQoKCkgLT4gVG9hc3QubWFrZVRleHQoTWFpbkFjdGl2aXR5LnRoaXMsICJTYXZlZCBpbiBEb3dubG9hZHM6ICIgKyBmaWxlTmFtZSwgVG9hc3QuTEVOR1RIX0xPTkcpLnNob3coKSk7CiAgICAgICAgICAgICAgICAgICAgcmV0dXJuIG91dEZpbGUuZ2V0QWJzb2x1dGVQYXRoKCk7CiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgIH0gY2F0Y2ggKEV4Y2VwdGlvbiBlKSB7CiAgICAgICAgICAgICAgICBlLnByaW50U3RhY2tUcmFjZSgpOwogICAgICAgICAgICB9CiAgICAgICAgICAgIHJldHVybiAiIjsKICAgICAgICB9CiAgICB9Cn0K"
+          with open(os.path.join(main_act_dir, "MainActivity.java"), "wb") as mf:
+              mf.write(base64.b64decode(main_act_b64))
           print("Installed native AndroidDownloader bridge for direct Downloads folder export")
           PYEOF
           cd android
