@@ -1,0 +1,18 @@
+{
+  "name": "billkhata-android",
+  "version": "1.0.0",
+  "description": "BillKhata - Simple Shop & Wholesaler Bill Organizer for Android",
+  "main": "www/index.html",
+  "scripts": {
+    "init:android": "npx cap add android && npx cap sync android",
+    "sync": "npx cap sync android",
+    "open:android": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}
