@@ -1,0 +1,66 @@
+name: Build BillKhata Android APK & Play Store AAB
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up JDK 17 for Android Gradle
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Capacitor & Generate Android Native Project
+        run: |
+          npm install
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+          npx cap sync android
+
+      - name: Configure Android Camera & Storage Permissions
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
+            sed -i 's|<application|<uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />\n    <application|' "$MANIFEST"
+          fi
+
+      - name: Build Installable APK (For Direct Install from GitHub)
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Build Play Store Bundle AAB
+        run: |
+          cd android
+          ./gradlew bundleRelease
+
+      - name: Upload Installable BillKhata APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BillKhata-Installable-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload Play Store AAB Bundle Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BillKhata-PlayStore-AAB
+          path: android/app/build/outputs/bundle/release/app-release.aab
