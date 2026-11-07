@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BillKhata - Simple Shop Bill Organizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      background-color: #f8fafc;
+      color: #0f172a;
+      font-family: 'Inter', 'Noto Sans Devanagari', -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      height: 4px;
+      width: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased pb-20 sm:pb-6">
+
+  <!-- ========================================================================= -->
+  <!-- 1. CLEAN APP HEADER -->
+  <!-- ========================================================================= -->
+  <header class="bg-blue-600 text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-md md:max-w-3xl lg:max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-9 h-9 rounded-xl bg-white text-blue-600 flex items-center justify-center font-black shadow-sm">
+          <i data-lucide="receipt" class="w-5 h-5 stroke-[2.5]"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-extrabold tracking-tight leading-tight">BillKhata <span class="text-blue-200 text-xs font-normal">| बिल खाता</span></h1>
+          <p class="text-[11px] text-blue-100">Wholesale & Shop Bills Organizer</p>
+        </div>
+      </div>
+
+      <div class="bg-blue-700/80 px-2.5 py-1 rounded-lg text-xs font-bold text-white border border-blue-500/50 flex items-center space-x-1">
+        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-300"></i>
+        <span>100% Private</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- 2. MAIN CONTAINER -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 max-w-md md:max-w-3xl lg:max-w-5xl w-full mx-auto p-3.5 sm:p-5 space-y-4">
+
+    <!-- TOP CONTROLS: STACKED ON PHONES, SIDE-BY-SIDE ON TABLETS -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+    <!-- HERO ACTION: 2 CLEAR BUTTONS (CAMERA & GALLERY) -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 flex flex-col space-y-3">
+      
+      <!-- Hidden file inputs -->
+      <!-- 1. Real Mobile Camera (capture="environment") -->
+      <input type="file" id="camera-file-input" accept="image/*" capture="environment" class="hidden" onchange="handleBillCapture(event)">
+      <!-- 2. Phone Gallery / Files (without capture attribute) -->
+      <input type="file" id="gallery-file-input" accept="image/*" class="hidden" onchange="handleBillCapture(event)">
+
+      <div class="grid grid-cols-2 gap-2.5">
+        <!-- Button 1: Take Photo with Camera -->
+        <button type="button" onclick="openCameraOrCapture()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white py-3.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex flex-col items-center justify-center space-y-1 shadow-md shadow-emerald-600/20 transition">
+          <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+            <i data-lucide="camera" class="w-4 h-4 stroke-[2.5]"></i>
+          </div>
+          <span>Take Photo</span>
+          <span class="text-[10px] font-medium text-emerald-100">कैमरे से फोटो लें</span>
+        </button>
+
+        <!-- Button 2: Upload from Gallery -->
+        <button type="button" onclick="openGalleryPicker()" class="bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white py-3.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex flex-col items-center justify-center space-y-1 shadow-md shadow-blue-600/20 transition">
+          <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+            <i data-lucide="image" class="w-4 h-4 stroke-[2.5]"></i>
+          </div>
+          <span>From Gallery</span>
+          <span class="text-[10px] font-medium text-blue-100">गैलरी से चुनें</span>
+        </button>
+      </div>
+
+      <p class="text-[11px] text-slate-500 text-center flex items-center justify-center gap-1 pt-0.5">
+        <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
+        <span>Saves inside BillKhata — never mixes with personal gallery!</span>
+      </p>
+    </div>
+
+    <!-- DATE FILTER: DROPDOWN ON LEFT + SEPARATED CALENDAR ICON ON RIGHT -->
+    <div id="date-filter-card" class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/80 space-y-3">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-extrabold text-slate-700 uppercase tracking-wide">
+          Filter Bills by Date (तारीख अनुसार बिल)
+        </span>
+        <span id="active-filter-label" class="text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
+          All Bills (सभी बिल)
+        </span>
+      </div>
+
+      <!-- Visually Separated Row: Dropdown on Left | Divider | Calendar Icon Button on Right -->
+      <div class="flex items-stretch gap-3">
+        
+        <!-- 1. Left: Unified Dropdown for All, Today, Yesterday, This Month, Date Range -->
+        <div class="relative flex-1">
+          <select id="date-preset-select" onchange="setDateFilter(this.value)" class="w-full h-full bg-slate-50 hover:bg-slate-100 border border-slate-300 text-slate-900 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-bold focus:outline-none focus:border-blue-600 focus:bg-white transition cursor-pointer shadow-sm">
+            <option value="all">📋 All Bills (सभी बिल)</option>
+            <option value="today">📍 Today (आज - 06 Nov)</option>
+            <option value="yesterday">⏮️ Yesterday (कल - 05 Nov)</option>
+            <option value="week">🗓️ Last 7 Days (पिछले 7 दिन)</option>
+            <option value="month">📅 This Month (यह महीना - Nov)</option>
+            <option value="range">↔️ Custom Date Range (तारीख से तारीख)</option>
+          </select>
+        </div>
+
+        <!-- Visual Vertical Divider -->
+        <div class="w-px bg-slate-200 my-1"></div>
+
+        <!-- 2. Right: Separated Standalone Calendar Icon Picker -->
+        <div class="relative shrink-0">
+          <input type="date" id="calendar-picker" onchange="handleSingleCalendarPick(this.value)" class="sr-only">
+          <button type="button" onclick="openSeparatedCalendarPicker()" id="calendar-icon-btn" class="h-full px-3.5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 border-2 border-blue-200 flex items-center space-x-2 transition shadow-sm" title="Pick specific date from calendar">
+            <i data-lucide="calendar" class="w-4 h-4 text-blue-600 stroke-[2.5]"></i>
+            <span id="calendar-btn-label" class="text-xs font-extrabold">Calendar</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Optional Date Range Bar (Shown when 'Custom Date Range' is selected) -->
+      <div id="date-range-bar" class="pt-2.5 border-t border-slate-100 grid grid-cols-2 gap-2.5 hidden">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">From Date (कब से)</label>
+          <input type="date" id="range-start-date" value="2026-11-01" onchange="applyCustomDateRange()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">To Date (कब तक)</label>
+          <input type="date" id="range-end-date" value="2026-11-06" onchange="applyCustomDateRange()" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600">
+        </div>
+      </div>
+    </div>
+
+    </div>
+
+    <!-- SIMPLE 2-TAB VIEW SWITCHER: DATE-WISE BILLS vs SHOP FOLDERS -->
+    <div class="grid grid-cols-2 gap-2 bg-slate-200/80 p-1 rounded-2xl border border-slate-300/60">
+      <button type="button" id="tab-view-date" onclick="switchBrowseMode('date')" class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center space-x-1.5 transition bg-white text-blue-700 shadow-sm">
+        <i data-lucide="calendar" class="w-4 h-4"></i>
+        <span>By Date (तारीख से)</span>
+      </button>
+      <button type="button" id="tab-view-shops" onclick="switchBrowseMode('shops')" class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center space-x-1.5 transition text-slate-600 hover:text-slate-900">
+        <i data-lucide="folder" class="w-4 h-4"></i>
+        <span>Shop Folders (दुकानें)</span>
+      </button>
+    </div>
+
+    <!-- ACTIVE SHOP FOLDER BANNER (Shown when inside a specific shop folder) -->
+    <div id="selected-shop-banner" class="bg-blue-600 text-white rounded-2xl p-3.5 shadow-md flex items-center justify-between gap-2 hidden">
+      <div class="min-w-0 flex-1">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-blue-200 block">Viewing Shop Folder</span>
+        <h2 id="selected-shop-title" class="text-sm sm:text-base font-black leading-snug break-words">Shop Name</h2>
+      </div>
+      <button type="button" onclick="backToAllShopFolders()" class="shrink-0 px-3 py-1.5 rounded-xl bg-white text-blue-700 text-xs font-extrabold flex items-center space-x-1 shadow-sm hover:bg-blue-50 transition">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+        <span>All Shops</span>
+      </button>
+    </div>
+
+    <!-- SEARCH BAR -->
+    <div class="relative">
+      <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+      <input type="text" id="search-input" oninput="renderBills()" placeholder="Search shop name, bill number, or ₹ amount..." class="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 shadow-sm font-medium">
+    </div>
+
+    <!-- BILLS SUMMARY & EXCEL EXPORT BAR -->
+    <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/80 flex items-center justify-between">
+      <div>
+        <span id="summary-heading-label" class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Saved Bills Summary</span>
+        <div class="text-base font-black text-slate-900 leading-tight mt-0.5">
+          <span id="bills-total-amount" class="text-emerald-600">₹22,600</span>
+          <span class="text-xs text-slate-500 font-semibold"> &bull; <span id="bills-count">6</span> Bills</span>
+        </div>
+      </div>
+
+      <!-- 1-Click Excel / CSV Export -->
+      <button type="button" onclick="exportBillsToExcelCSV()" class="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold transition flex items-center space-x-1.5 shadow-sm" title="Download Excel / CSV list of bills">
+        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+        <span>Excel Export</span>
+      </button>
+    </div>
+
+    <!-- BILLS CARDS LIST (1 Col on Phones, 2 Cols on Tablets, 3 Cols on Large Tablets) -->
+    <div id="bills-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+      <!-- Injected by JS -->
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- 3. MODAL: SAVE NEW BILL (3 Simple Questions Only) -->
+  <!-- ========================================================================= -->
+  <div id="modal-save-bill" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-sm md:max-w-md rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
+      
+      <div class="bg-blue-600 text-white p-3.5 flex items-center justify-between">
+        <h3 class="text-sm font-bold flex items-center gap-1.5">
+          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-300"></i>
+          <span>Save Bill Photo (बिल सेव करें)</span>
+        </h3>
+        <button type="button" onclick="closeSaveModal()" class="text-blue-200 hover:text-white p-1">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-4 space-y-3">
+        <!-- Multi-Page Bill Photo Strip (Add Page 2, 3, etc. via Camera) -->
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i>
+              <span>Bill Pages (<span id="modal-pages-count">1</span> Page Captured)</span>
+            </span>
+            <span class="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
+              Multi-Page Ready
+            </span>
+          </div>
+
+          <!-- Horizontal Page Thumbnails Strip -->
+          <div id="modal-pages-strip" class="flex items-center space-x-2 overflow-x-auto pb-1 custom-scroll">
+            <!-- Dynamically populated by renderSaveModalPages() -->
+          </div>
+
+          <!-- Direct Camera & Gallery Buttons to Snap Next Page -->
+          <div class="pt-1 border-t border-slate-200 flex items-center justify-between gap-2">
+            <!-- Hidden inputs for adding pages -->
+            <input type="file" id="add-page-camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleAddPageCapture(event)">
+            <input type="file" id="add-page-gallery-input" accept="image/*" class="hidden" onchange="handleAddPageCapture(event)">
+
+            <button type="button" onclick="document.getElementById('add-page-camera-input').click()" class="flex-1 py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center space-x-1.5 shadow-sm transition active:scale-95">
+              <i data-lucide="camera" class="w-3.5 h-3.5 stroke-[2.5]"></i>
+              <span>+ Snap Next Page</span>
+            </button>
+
+            <button type="button" onclick="document.getElementById('add-page-gallery-input').click()" class="py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold flex items-center space-x-1 transition">
+              <i data-lucide="image" class="w-3.5 h-3.5"></i>
+              <span>From Gallery</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 1. Wholesaler / Shop Name (Auto-Suggest on Typing + Dropdown) -->
+        <div class="relative">
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-xs font-bold text-slate-700 flex items-center gap-1">
+              <span>Shop / Wholesaler Name</span>
+              <span class="text-slate-400 font-normal">(दुकान का नाम)</span>
+            </label>
+            <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded">Auto-Suggests</span>
+          </div>
+
+          <!-- Quick Dropdown of All Saved Shops -->
+          <div class="mb-1.5">
+            <select id="select-saved-vendor" onchange="handleSavedVendorSelect(this.value)" class="w-full bg-blue-50/70 border border-blue-200 text-blue-900 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:border-blue-600 cursor-pointer">
+              <option value="">▼ Choose from Saved Shops (पुराने व्यापारियों में से चुनें)</option>
+              <!-- Populated dynamically from savedShops -->
+            </select>
+          </div>
+
+          <!-- Text Input with Real-time Auto-Suggest Dropdown Below -->
+          <div class="relative">
+            <input type="text" id="input-vendor-name" oninput="handleVendorTyping(this.value)" onfocus="handleVendorTyping(this.value)" placeholder="Type to search or add new shop (नाम टाइप करें)..." class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-3 pr-8 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white font-bold transition shadow-sm" autocomplete="off">
+            <button type="button" onclick="clearVendorInput()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <!-- LIVE AUTO-SUGGEST DROPDOWN LIST (Opens directly under the textbox when typing) -->
+          <div id="vendor-autosuggest-box" class="absolute left-0 right-0 top-full mt-1 bg-white border border-blue-300 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto custom-scroll hidden divide-y divide-slate-100">
+            <!-- Populated dynamically by handleVendorTyping() -->
+          </div>
+        </div>
+
+        <!-- 2. Bill Amount & Invoice / Bill No (Side-by-side) -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Bill Amount ₹ (रकम)
+            </label>
+            <div class="relative flex items-center">
+              <span class="absolute left-3 text-base font-black text-emerald-600">₹</span>
+              <input type="number" step="1" id="input-bill-amount" placeholder="0" class="w-full bg-emerald-50/50 border border-emerald-300 rounded-xl pl-7 pr-2.5 py-2 text-base font-black text-slate-900 focus:outline-none focus:border-emerald-600">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              Bill / Chalan No. <span class="text-slate-400 font-normal">(बिल नं.)</span>
+            </label>
+            <input type="text" id="input-bill-number" placeholder="e.g. INV-891" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-600 font-semibold">
+          </div>
+        </div>
+
+        <!-- 3. Bill Date -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            Bill Date (बिल की तारीख)
+          </label>
+          <input type="date" id="input-bill-date" value="2026-11-06" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-blue-600 font-semibold cursor-pointer">
+        </div>
+
+
+      </div>
+
+      <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end space-x-2">
+        <button type="button" onclick="closeSaveModal()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-200 text-slate-700">
+          Cancel
+        </button>
+        <button type="button" onclick="confirmSaveBill()" class="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md flex items-center space-x-1">
+          <i data-lucide="check" class="w-3.5 h-3.5"></i>
+          <span>Save Bill (सेव करें)</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 4. MODAL: VIEW FULL PHOTO (Zoom, WhatsApp & Delete) -->
+  <!-- ========================================================================= -->
+  <div id="modal-view-bill" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-white w-full max-w-sm md:max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      
+      <div class="bg-slate-900 text-white p-3.5 flex items-start justify-between gap-2">
+        <div class="min-w-0 flex-1">
+          <h4 id="view-modal-vendor" class="text-sm sm:text-base font-extrabold text-white leading-snug break-words">Wholesaler Name</h4>
+          <p id="view-modal-date" class="text-[11px] text-slate-300 mt-1 font-medium">Date: 06 Nov 2026</p>
+        </div>
+        <button type="button" onclick="closeViewModal()" class="text-slate-400 hover:text-white p-1 shrink-0">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Large Image Display -->
+      <div class="bg-black p-2 flex items-center justify-center min-h-[260px] overflow-hidden">
+        <img id="view-modal-img" src="" alt="Full Bill Photo" class="max-h-[340px] md:max-h-[460px] w-auto object-contain rounded-lg">
+      </div>
+
+      <!-- Bill Amount Row -->
+      <div class="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs">
+        <span class="text-slate-500 font-bold uppercase tracking-wider text-[11px]">Bill Amount (बिल की रकम)</span>
+        <span id="view-modal-amount" class="text-base font-black text-emerald-600">₹0</span>
+      </div>
+
+      <!-- Multi-Page Navigation Bar in Viewer -->
+      <div id="view-modal-pages-bar" class="px-3 py-2 bg-slate-100 border-t border-slate-200 flex items-center justify-between text-xs">
+        <div class="flex items-center space-x-1.5">
+          <span class="font-extrabold text-slate-700 flex items-center gap-1">
+            <i data-lucide="layers" class="w-3.5 h-3.5 text-blue-600"></i>
+            <span>Page <span id="viewer-current-page-num">1</span> of <span id="viewer-total-pages-num">1</span></span>
+          </span>
+        </div>
+
+        <div id="viewer-page-pills" class="flex items-center space-x-1.5 overflow-x-auto">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- WhatsApp & Image Share Guide -->
+      <div class="px-3 py-2 bg-emerald-50 border-t border-emerald-100 flex items-center justify-between text-[11px] text-emerald-800 font-medium">
+        <span class="flex items-center gap-1.5">
+          <i data-lucide="image" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>Share bill photo with text to WhatsApp</span>
+        </span>
+        <button type="button" onclick="downloadBillPhoto()" class="font-bold text-emerald-700 underline flex items-center gap-0.5">
+          <i data-lucide="download" class="w-3 h-3"></i> Save Photo
+        </button>
+      </div>
+
+      <!-- Action Buttons: WhatsApp Share & Delete -->
+      <div class="p-3 bg-white border-t border-slate-200 flex items-center justify-between">
+        <button type="button" onclick="deleteCurrentBill()" class="px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 flex items-center space-x-1">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>Delete (हटाएं)</span>
+        </button>
+
+        <button type="button" id="btn-share-whatsapp" onclick="shareOnWhatsAppWithImage()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center space-x-1.5 shadow-md transition active:scale-95">
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+          <span id="share-btn-text">Share on WhatsApp (फोटो सहित)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 5. APPLICATION JAVASCRIPT LOGIC -->
+  <!-- ========================================================================= -->
+  <script>
+    // Initial Seed Data (Wholesalers & Receipts for Shopkeepers)
+    let bills = [
+      {
+        id: "b-1",
+        vendor: "Mahakal Kirana Wholesale (सियागंज)",
+        amount: 6800,
+        billNumber: "MK-891",
+        status: "paid",
+        date: "2026-11-06",
+        imageUri: generateMockBillImage("Mahakal Kirana Wholesale", "₹6,800", "06-11-2026", "2 Bag Basmati Rice, 1 Tin Oil"),
+        pages: [
+          generateMockBillImage("Mahakal Kirana Wholesale", "₹6,800", "06-11-2026", "2 Bag Basmati Rice, 1 Tin Oil"),
+          generateMockBillImage("Mahakal Page 2 (Tax & E-Way)", "GST 18%", "06-11-2026", "Delivery Challan & E-Way Bill")
+        ]
+      },
+      {
+        id: "b-2",
+        vendor: "Indore Plywood & Hardware",
+        amount: 3450,
+        billNumber: "IPH-104",
+        status: "paid",
+        date: "2026-11-06",
+        imageUri: generateMockBillImage("Indore Plywood & Hardware", "₹3,450", "06-11-2026", "4 Sheets Commercial Plywood"),
+        pages: [
+          generateMockBillImage("Indore Plywood & Hardware", "₹3,450", "06-11-2026", "4 Sheets Commercial Plywood")
+        ]
+      },
+      {
+        id: "b-3",
+        vendor: "Shreeji Roadlines (ट्रांसपोर्ट बिल्टी)",
+        amount: 2760,
+        billNumber: "SJ-99120",
+        status: "pending",
+        date: "2026-11-05",
+        imageUri: generateMockBillImage("Shreeji Roadlines Bilti", "₹2,760", "05-11-2026", "Ahmedabad to Indore Freight"),
+        pages: [
+          generateMockBillImage("Shreeji Roadlines Bilti", "₹2,760", "05-11-2026", "Ahmedabad to Indore Freight"),
+          generateMockBillImage("Shreeji Transport Bilti LR", "PAID", "05-11-2026", "Lorry Receipt & Consignment")
+        ]
+      },
+      {
+        id: "b-6",
+        vendor: "Mahakal Kirana Wholesale (सियागंज)",
+        amount: 4150,
+        billNumber: "MK-742",
+        status: "paid",
+        date: "2026-11-03",
+        imageUri: generateMockBillImage("Mahakal Kirana Wholesale", "₹4,150", "03-11-2026", "Sugar 1 Quintal & Toor Dal"),
+        pages: [
+          generateMockBillImage("Mahakal Kirana Wholesale", "₹4,150", "03-11-2026", "Sugar 1 Quintal & Toor Dal")
+        ]
+      },
+      {
+        id: "b-4",
+        vendor: "Rajesh Hardware & Sanitary",
+        amount: 4200,
+        billNumber: "RH-402",
+        status: "paid",
+        date: "2026-11-04",
+        imageUri: generateMockBillImage("Rajesh Hardware Indore", "₹4,200", "04-11-2026", "CPVC Pipes and Fittings"),
+        pages: [
+          generateMockBillImage("Rajesh Hardware Indore", "₹4,200", "04-11-2026", "CPVC Pipes and Fittings")
+        ]
+      },
+      {
+        id: "b-5",
+        vendor: "Shop Electricity Bill (MPEB)",
+        amount: 1240,
+        billNumber: "MPEB-OCT26",
+        status: "paid",
+        date: "2026-11-01",
+        imageUri: generateMockBillImage("M.P. Electricity Board", "₹1,240", "01-11-2026", "October Shop Electricity"),
+        pages: [
+          generateMockBillImage("M.P. Electricity Board", "₹1,240", "01-11-2026", "October Shop Electricity")
+        ]
+      }
+    ];
+
+    let currentStatusFilter = "all";
+    let newBillSelectedStatus = "paid";
+    let pendingBillPages = []; // Holds all page data URIs for current new bill
+    let viewingModalPageIndex = 0;
+
+    let currentDateFilter = "all";
+    let pendingCapturedImage = "";
+    let activeViewingBillId = null;
+
+    // -------------------------------------------------------------------------
+    // CANVAS HELPER (Generates clean, legible bill images)
+    // -------------------------------------------------------------------------
+    function generateMockBillImage(title, amount, date, desc) {
+      const c = document.createElement("canvas");
+      c.width = 400;
+      c.height = 480;
+      const ctx = c.getContext("2d");
+
+      // Crisp paper card
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, 400, 480);
+
+      // Header navy stripe
+      ctx.fillStyle = "#1e40af";
+      ctx.fillRect(0, 0, 400, 24);
+
+      // Shop / Wholesaler Name
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 20px 'Inter', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(title, 200, 65);
+
+      ctx.font = "12px 'Inter', sans-serif";
+      ctx.fillStyle = "#64748b";
+      ctx.fillText("TAX INVOICE / पर्चा • " + date, 200, 88);
+
+      // Divider
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(30, 105); ctx.lineTo(370, 105);
+      ctx.stroke();
+
+      // Description lines
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#1e293b";
+      ctx.font = "bold 13px 'Inter', sans-serif";
+      ctx.fillText("1. " + desc, 40, 145);
+
+      ctx.textAlign = "right";
+      ctx.fillText(amount, 360, 145);
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#64748b";
+      ctx.font = "11px 'Inter', sans-serif";
+      ctx.fillText("STANDARD STORE TAX & CHARGES", 40, 185);
+      ctx.textAlign = "right";
+      ctx.fillText("INCLUDED", 360, 185);
+
+      // Big Amount Green Box
+      ctx.fillStyle = "#f0fdf4";
+      ctx.fillRect(30, 230, 340, 65);
+      ctx.strokeStyle = "#86efac";
+      ctx.strokeRect(30, 230, 340, 65);
+
+      ctx.fillStyle = "#166534";
+      ctx.font = "bold 15px 'Inter', sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("TOTAL AMOUNT (रकम)", 45, 270);
+
+      ctx.font = "bold 24px 'Inter', sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(amount, 355, 272);
+
+      // Barcode
+      ctx.fillStyle = "#334155";
+      for (let x = 60; x < 340; x += 6) {
+        ctx.fillRect(x, 350, 3, 35);
+      }
+      ctx.font = "11px monospace";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#64748b";
+      ctx.fillText("||| BILLKHATA SECURE STORE RECORD |||", 200, 410);
+
+      return c.toDataURL("image/png");
+    }
+
+    // -------------------------------------------------------------------------
+    // INITIAL LOAD
+    // -------------------------------------------------------------------------
+    document.addEventListener("DOMContentLoaded", function() {
+      try {
+        const saved = localStorage.getItem("billkhata_records");
+        if (saved) {
+          bills = JSON.parse(saved);
+        }
+      } catch (e) {}
+      loadSavedShops();
+      renderBills();
+      lucide.createIcons();
+    });
+
+    function saveToStorage() {
+      try {
+        localStorage.setItem("billkhata_records", JSON.stringify(bills));
+      } catch (e) {}
+    }
+
+    // -------------------------------------------------------------------------
+    // CAMERA / CAPTURE TRIGGER
+    // -------------------------------------------------------------------------
+    
+    // -------------------------------------------------------------------------
+    // SAVED SHOP NAMES & DROPDOWN MANAGEMENT (Persistent Local Wholesaler List)
+    // -------------------------------------------------------------------------
+    let savedShops = [
+      "Mahakal Kirana Wholesale (सियागंज)",
+      "Indore Plywood & Hardware",
+      "Shreeji Roadlines (ट्रांसपोर्ट बिल्टी)",
+      "Rajesh Hardware & Sanitary",
+      "Shop Electricity Bill (MPEB)",
+      "Gupta Cement & Sariya",
+      "Agarwal Poha & Masala",
+      "Sharmaji Transport Loha Mandi"
+    ];
+
+    function loadSavedShops() {
+      try {
+        const stored = localStorage.getItem("billkhata_saved_shops");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            savedShops = parsed;
+          }
+        }
+      } catch (e) {}
+
+      // Also ensure any vendor currently in bills is in savedShops
+      bills.forEach(b => {
+        if (b.vendor && !savedShops.includes(b.vendor)) {
+          savedShops.push(b.vendor);
+        }
+      });
+
+      populateShopDropdowns();
+    }
+
+    function saveShopToPersistentList(shopName) {
+      if (!shopName || !shopName.trim()) return;
+      const clean = shopName.trim();
+      if (!savedShops.includes(clean)) {
+        savedShops.unshift(clean); // Add to top
+        try {
+          localStorage.setItem("billkhata_saved_shops", JSON.stringify(savedShops));
+        } catch (e) {}
+      }
+      populateShopDropdowns();
+    }
+
+    let currentBrowseMode = "date"; // "date" | "shops"
+    let selectedShopFolder = null;  // null (showing folder list) or shop name string (showing that shop's bills)
+
+    function populateShopDropdowns() {
+      const modalSelect = document.getElementById("select-saved-vendor");
+      if (modalSelect) {
+        let opts = `<option value="">▼ Choose from Saved Shops (${savedShops.length} shops saved)</option>`;
+        savedShops.forEach(shop => {
+          opts += `<option value="${shop}">${shop}</option>`;
+        });
+        modalSelect.innerHTML = opts;
+      }
+    }
+
+    function switchBrowseMode(mode) {
+      currentBrowseMode = mode;
+      selectedShopFolder = null;
+
+      const tabDate = document.getElementById("tab-view-date");
+      const tabShops = document.getElementById("tab-view-shops");
+      const dateFilterCard = document.getElementById("date-filter-card");
+      const shopBanner = document.getElementById("selected-shop-banner");
+      const summaryHeading = document.getElementById("summary-heading-label");
+
+      if (mode === "shops") {
+        if (tabShops) tabShops.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center space-x-1.5 transition bg-white text-blue-700 shadow-sm";
+        if (tabDate) tabDate.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center space-x-1.5 transition text-slate-600 hover:text-slate-900";
+        if (dateFilterCard) dateFilterCard.classList.add("hidden");
+        if (shopBanner) shopBanner.classList.add("hidden");
+        if (summaryHeading) summaryHeading.textContent = "All Shop Folders Summary";
+      } else {
+        if (tabDate) tabDate.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center space-x-1.5 transition bg-white text-blue-700 shadow-sm";
+        if (tabShops) tabShops.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center space-x-1.5 transition text-slate-600 hover:text-slate-900";
+        if (dateFilterCard) dateFilterCard.classList.remove("hidden");
+        if (shopBanner) shopBanner.classList.add("hidden");
+        if (summaryHeading) summaryHeading.textContent = "Saved Bills Summary";
+      }
+
+      renderBills();
+    }
+
+    function openShopFolder(shopName) {
+      currentBrowseMode = "shops";
+      selectedShopFolder = shopName;
+
+      const tabDate = document.getElementById("tab-view-date");
+      const tabShops = document.getElementById("tab-view-shops");
+      const dateFilterCard = document.getElementById("date-filter-card");
+      const shopBanner = document.getElementById("selected-shop-banner");
+      const shopTitle = document.getElementById("selected-shop-title");
+      const summaryHeading = document.getElementById("summary-heading-label");
+
+      if (tabShops) tabShops.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center space-x-1.5 transition bg-white text-blue-700 shadow-sm";
+      if (tabDate) tabDate.className = "py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center space-x-1.5 transition text-slate-600 hover:text-slate-900";
+      if (dateFilterCard) dateFilterCard.classList.add("hidden");
+      if (shopBanner) shopBanner.classList.remove("hidden");
+      if (shopTitle) shopTitle.textContent = shopName;
+      if (summaryHeading) summaryHeading.textContent = "Shop Total";
+
+      renderBills();
+    }
+
+    function backToAllShopFolders() {
+      selectedShopFolder = null;
+      const shopBanner = document.getElementById("selected-shop-banner");
+      const summaryHeading = document.getElementById("summary-heading-label");
+      if (shopBanner) shopBanner.classList.add("hidden");
+      if (summaryHeading) summaryHeading.textContent = "All Shop Folders Summary";
+      renderBills();
+    }
+
+    function handleSavedVendorSelect(selectedVal) {
+      const input = document.getElementById("input-vendor-name");
+      const box = document.getElementById("vendor-autosuggest-box");
+      if (selectedVal) {
+        input.value = selectedVal;
+      }
+      if (box) box.classList.add("hidden");
+    }
+
+    function handleVendorTyping(query) {
+      const box = document.getElementById("vendor-autosuggest-box");
+      const modalSelect = document.getElementById("select-saved-vendor");
+      if (!box) return;
+
+      if (modalSelect && modalSelect.value !== "") {
+        modalSelect.value = "";
+      }
+
+      const rawTrimmed = (query || "").trim();
+      const q = rawTrimmed.toLowerCase();
+
+      // Filter matching saved shops
+      const matches = savedShops.filter(shop => {
+        if (!q) return true; // Show all if input focused without query
+        return shop.toLowerCase().includes(q);
+      });
+
+      // Check if exact match already exists
+      const exactMatchExists = savedShops.some(shop => shop.toLowerCase() === q);
+
+      let html = "";
+
+      // Render matching existing shops
+      matches.slice(0, 5).forEach(shop => {
+        let displayHtml = shop;
+        if (q) {
+          const idx = shop.toLowerCase().indexOf(q);
+          if (idx !== -1) {
+            displayHtml = shop.substring(0, idx) + 
+              '<span class="bg-yellow-200 text-slate-900 font-black px-0.5 rounded">' + 
+              shop.substring(idx, idx + q.length) + 
+              '</span>' + 
+              shop.substring(idx + q.length);
+          }
+        }
+
+        html += `
+          <div onclick="selectSuggestedShop('${shop.replace(/'/g, "\\'")}')" class="px-3 py-2.5 hover:bg-blue-50 cursor-pointer flex items-start justify-between gap-2 transition text-xs group">
+            <div class="flex items-start space-x-2 min-w-0 flex-1">
+              <i data-lucide="store" class="w-4 h-4 text-blue-600 shrink-0 mt-0.5"></i>
+              <span class="font-bold text-slate-900 leading-snug break-words">${displayHtml}</span>
+            </div>
+            <span class="text-[10px] text-blue-600 font-bold shrink-0 mt-0.5">Select &rarr;</span>
+          </div>
+        `;
+      });
+
+      // ALWAYS show the "+ Add New" button under the dropdown while typing a new shop name
+      if (rawTrimmed.length > 0 && !exactMatchExists) {
+        const escapedNewName = rawTrimmed.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        html += `
+          <div class="p-2.5 bg-emerald-50/90 border-t border-emerald-200 flex items-center justify-between gap-2">
+            <div class="min-w-0 flex-1">
+              <span class="text-[10px] font-bold text-emerald-700 uppercase block">New Shop Name</span>
+              <span class="text-xs font-black text-slate-900 leading-snug break-words block">"${rawTrimmed}"</span>
+            </div>
+            <button type="button" onclick="addNewShopDirectly('${escapedNewName}')" class="shrink-0 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs flex items-center space-x-1 shadow-sm transition">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+              <span>+ Add New (नया जोड़ें)</span>
+            </button>
+          </div>
+        `;
+      }
+
+      box.innerHTML = html;
+      box.classList.remove("hidden");
+      lucide.createIcons();
+    }
+
+    function addNewShopDirectly(shopName) {
+      if (!shopName || !shopName.trim()) return;
+      const clean = shopName.trim();
+
+      // Save to persistent list and update dropdown
+      saveShopToPersistentList(clean);
+
+      // Select it in both text input and dropdown
+      const input = document.getElementById("input-vendor-name");
+      const modalSelect = document.getElementById("select-saved-vendor");
+      const box = document.getElementById("vendor-autosuggest-box");
+
+      if (input) input.value = clean;
+      if (modalSelect) modalSelect.value = clean;
+      if (box) box.classList.add("hidden");
+
+      // Jump cursor directly to Bill Amount input for fast entry
+      const amountInput = document.getElementById("input-bill-amount");
+      if (amountInput) amountInput.focus();
+    }
+
+    function selectSuggestedShop(shopName) {
+      const input = document.getElementById("input-vendor-name");
+      const box = document.getElementById("vendor-autosuggest-box");
+      const modalSelect = document.getElementById("select-saved-vendor");
+
+      if (input) input.value = shopName;
+      if (modalSelect) modalSelect.value = shopName;
+      if (box) box.classList.add("hidden");
+    }
+
+    function clearVendorInput() {
+      const input = document.getElementById("input-vendor-name");
+      const box = document.getElementById("vendor-autosuggest-box");
+      const modalSelect = document.getElementById("select-saved-vendor");
+
+      if (input) {
+        input.value = "";
+        input.focus();
+      }
+      if (modalSelect) modalSelect.value = "";
+      if (box) box.classList.add("hidden");
+    }
+
+    // Close auto-suggest box when tapping outside
+    document.addEventListener("click", function(e) {
+      const box = document.getElementById("vendor-autosuggest-box");
+      const input = document.getElementById("input-vendor-name");
+      if (box && !box.contains(e.target) && e.target !== input) {
+        box.classList.add("hidden");
+      }
+    });
+
+    
+    // -------------------------------------------------------------------------
+    // CSV / EXCEL EXPORT HELPER
+    // -------------------------------------------------------------------------
+    function exportBillsToExcelCSV() {
+      if (bills.length === 0) return;
+
+      // Prepare CSV lines with BOM for Excel UTF-8 support
+      let csvContent = "\uFEFF";
+      csvContent += "Bill Date,Wholesaler / Shop Name,Bill No,Amount (INR),Pages Attached\n";
+
+      bills.forEach(b => {
+        const cleanVendor = `"${(b.vendor || '').replace(/"/g, '""')}"`;
+        const billNum = `"${(b.billNumber || '-').replace(/"/g, '""')}"`;
+        const pageCount = (b.pages && b.pages.length > 0) ? b.pages.length : 1;
+        const pages = `${pageCount} Page${pageCount > 1 ? 's' : ''}`;
+        csvContent += `${b.date},${cleanVendor},${billNum},${b.amount},${pages}\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `BillKhata_Bills_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+
+
+    function openCameraOrCapture() {
+      // Trigger the camera file input which launches phone camera on mobile
+      const input = document.getElementById("camera-file-input");
+      if (input) {
+        input.click();
+      }
+    }
+
+    function openGalleryPicker() {
+      // Trigger gallery file input which opens phone's photos/gallery album
+      const input = document.getElementById("gallery-file-input");
+      if (input) {
+        input.click();
+      }
+    }
+
+    function handleBillCapture(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      lastUploadedFileName = file.name || "";
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        pendingCapturedImage = e.target.result;
+        openSaveModal(pendingCapturedImage);
+      };
+      reader.readAsDataURL(file);
+
+      // Reset input value so same file can be selected again if needed
+      event.target.value = "";
+    }
+
+    // -------------------------------------------------------------------------
+    // SAVE MODAL
+    // -------------------------------------------------------------------------
+    function openSaveModal(firstImgSrc) {
+      pendingBillPages = [firstImgSrc]; // Initialize with page 1
+      document.getElementById("input-vendor-name").value = "";
+      document.getElementById("input-bill-amount").value = "";
+      document.getElementById("input-bill-number").value = "";
+      document.getElementById("input-bill-date").value = "2026-11-06";
+
+      renderSaveModalPages();
+
+      const box = document.getElementById("vendor-autosuggest-box");
+      if (box) box.classList.add("hidden");
+      populateShopDropdowns();
+      const modalSelect = document.getElementById("select-saved-vendor");
+      if (modalSelect) modalSelect.value = "";
+      document.getElementById("modal-save-bill").classList.remove("hidden");
+      lucide.createIcons();
+    }
+
+    function renderSaveModalPages() {
+      const strip = document.getElementById("modal-pages-strip");
+      const countEl = document.getElementById("modal-pages-count");
+      if (!strip) return;
+
+      countEl.textContent = pendingBillPages.length;
+
+      let html = "";
+      pendingBillPages.forEach((imgUri, idx) => {
+        const pageNum = idx + 1;
+        html += `
+          <div class="relative shrink-0">
+            <img src="${imgUri}" alt="Page ${pageNum}" class="w-14 h-16 object-cover rounded-xl border-2 border-blue-500 bg-white shadow-sm">
+            <span class="absolute top-1 left-1 bg-slate-900/90 text-white text-[9px] font-black px-1.5 py-0.2 rounded-md">
+              P${pageNum}
+            </span>
+            ${pendingBillPages.length > 1 ? `
+              <button type="button" onclick="removeCapturedPage(${idx})" class="absolute -top-1 -right-1 bg-rose-600 text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black shadow hover:bg-rose-700" title="Delete this page">
+                &times;
+              </button>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      // Add Page Plus Button placeholder in strip
+      html += `
+        <button type="button" onclick="document.getElementById('add-page-camera-input').click()" class="shrink-0 w-14 h-16 rounded-xl border-2 border-dashed border-emerald-400 bg-emerald-50/70 hover:bg-emerald-100 flex flex-col items-center justify-center text-emerald-800 transition active:scale-95" title="Snap another page with camera">
+          <i data-lucide="plus" class="w-4 h-4 text-emerald-600 stroke-[3]"></i>
+          <span class="text-[9px] font-bold mt-0.5">+ Page</span>
+        </button>
+      `;
+
+      strip.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function handleAddPageCapture(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        pendingBillPages.push(e.target.result);
+        renderSaveModalPages();
+        const strip = document.getElementById("modal-pages-strip");
+        if (strip) strip.scrollLeft = strip.scrollWidth;
+      };
+      reader.readAsDataURL(file);
+
+      event.target.value = "";
+    }
+
+    function removeCapturedPage(index) {
+      if (pendingBillPages.length <= 1) return;
+      pendingBillPages.splice(index, 1);
+      renderSaveModalPages();
+    }
+
+    function closeSaveModal() {
+      document.getElementById("modal-save-bill").classList.add("hidden");
+      pendingCapturedImage = "";
+    }
+
+    function confirmSaveBill() {
+      const rawVendor = document.getElementById("input-vendor-name").value.trim();
+      const vendor = rawVendor || "Wholesaler Bill";
+      const amount = parseFloat(document.getElementById("input-bill-amount").value) || 0;
+      const billNumber = document.getElementById("input-bill-number").value.trim() || "";
+      const date = document.getElementById("input-bill-date").value || "2026-11-06";
+
+      if (rawVendor) {
+        saveShopToPersistentList(rawVendor);
+      }
+
+      const finalPages = (pendingBillPages && pendingBillPages.length > 0)
+        ? [...pendingBillPages]
+        : [pendingCapturedImage || generateMockBillImage(vendor, `₹${amount}`, date, "New Bill Photo")];
+
+      const newRecord = {
+        id: "b-" + Date.now(),
+        vendor: vendor,
+        amount: amount,
+        billNumber: billNumber,
+        date: date,
+        imageUri: finalPages[0],
+        pages: finalPages
+      };
+
+      bills.unshift(newRecord);
+      saveToStorage();
+      closeSaveModal();
+      renderBills();
+    }
+
+    // -------------------------------------------------------------------------
+    // DATE FILTERING (Dropdown Presets + Separated Calendar + Custom Range)
+    // -------------------------------------------------------------------------
+    function setDateFilter(filterVal) {
+      currentDateFilter = filterVal;
+      const label = document.getElementById("active-filter-label");
+      const picker = document.getElementById("calendar-picker");
+      const presetSelect = document.getElementById("date-preset-select");
+      const rangeBar = document.getElementById("date-range-bar");
+      const calBtn = document.getElementById("calendar-icon-btn");
+      const calBtnLabel = document.getElementById("calendar-btn-label");
+
+      // Default reset for calendar button style
+      if (calBtn) {
+        calBtn.className = "h-full px-3.5 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-700 border-2 border-blue-200 flex items-center space-x-2 transition shadow-sm";
+      }
+      if (calBtnLabel) {
+        calBtnLabel.textContent = "Calendar";
+      }
+
+      if (filterVal === "range") {
+        if (rangeBar) rangeBar.classList.remove("hidden");
+        applyCustomDateRange();
+        return;
+      } else {
+        if (rangeBar) rangeBar.classList.add("hidden");
+      }
+
+      if (filterVal === "all") {
+        label.textContent = "All Bills (सभी बिल)";
+        if (picker) picker.value = "";
+        if (presetSelect) presetSelect.value = "all";
+      } else if (filterVal === "today") {
+        label.textContent = "Today: 06 Nov 2026 (आज)";
+        if (picker) picker.value = "2026-11-06";
+        if (presetSelect) presetSelect.value = "today";
+      } else if (filterVal === "yesterday") {
+        label.textContent = "Yesterday: 05 Nov 2026 (कल)";
+        if (picker) picker.value = "2026-11-05";
+        if (presetSelect) presetSelect.value = "yesterday";
+      } else if (filterVal === "week") {
+        label.textContent = "Last 7 Days (01 Nov - 06 Nov)";
+        if (picker) picker.value = "";
+        if (presetSelect) presetSelect.value = "week";
+      } else if (filterVal === "month") {
+        label.textContent = "This Month: Nov 2026 (महीना)";
+        if (picker) picker.value = "";
+        if (presetSelect) presetSelect.value = "month";
+      } else {
+        // Specific calendar date picked via the separated Calendar button
+        label.textContent = "Date: " + filterVal;
+        if (calBtn) {
+          calBtn.className = "h-full px-3.5 py-2.5 rounded-xl bg-blue-600 text-white border-2 border-blue-600 flex items-center space-x-2 transition shadow-sm";
+        }
+        if (calBtnLabel) {
+          calBtnLabel.textContent = filterVal;
+        }
+      }
+
+      renderBills();
+      lucide.createIcons();
+    }
+
+    function openSeparatedCalendarPicker() {
+      const picker = document.getElementById("calendar-picker");
+      if (!picker) return;
+      try {
+        if (typeof picker.showPicker === "function") {
+          picker.showPicker();
+        } else {
+          picker.focus();
+          picker.click();
+        }
+      } catch (e) {
+        // Fallback: toggle custom date range bar if browser blocks showPicker in iframe
+        const presetSelect = document.getElementById("date-preset-select");
+        if (presetSelect) {
+          presetSelect.value = "range";
+          setDateFilter("range");
+        }
+      }
+    }
+
+    function handleSingleCalendarPick(dateVal) {
+      if (!dateVal) {
+        setDateFilter("all");
+        return;
+      }
+      setDateFilter(dateVal);
+    }
+
+    function applyCustomDateRange() {
+      const startEl = document.getElementById("range-start-date");
+      const endEl = document.getElementById("range-end-date");
+      const label = document.getElementById("active-filter-label");
+      const startVal = startEl ? startEl.value : "";
+      const endVal = endEl ? endEl.value : "";
+
+      if (label && startVal && endVal) {
+        label.textContent = `${startVal} to ${endVal}`;
+      }
+      renderBills();
+    }
+
+    // -------------------------------------------------------------------------
+    // RENDER BILLS LIST
+    // -------------------------------------------------------------------------
+    function renderSingleBillCardHTML(bill) {
+      const pageCount = (bill.pages && bill.pages.length > 0) ? bill.pages.length : 1;
+      return `
+        <div onclick="openViewModal('${bill.id}')" class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/80 hover:border-blue-400 transition cursor-pointer flex items-start justify-between gap-3">
+          
+          <!-- Left: Thumbnail + Full Uncut Shop Name & Details -->
+          <div class="flex items-start space-x-3 min-w-0 flex-1">
+            <div class="relative shrink-0 mt-0.5">
+              <img src="${bill.imageUri}" alt="Thumbnail" class="w-14 h-14 object-cover rounded-xl border border-slate-200 bg-slate-100 shadow-sm">
+              ${pageCount > 1 ? `<span class="absolute -bottom-1 -right-1 bg-blue-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full shadow-md">${pageCount}P</span>` : ''}
+            </div>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-sm sm:text-base font-extrabold text-slate-900 leading-snug break-words">
+                ${bill.vendor}
+              </h3>
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500 mt-1">
+                <span class="flex items-center gap-1 font-medium text-slate-600">
+                  <i data-lucide="calendar" class="w-3 h-3 text-blue-600"></i>
+                  <span>${bill.date}</span>
+                </span>
+                ${bill.billNumber ? `<span class="text-[10px] text-slate-700 bg-slate-100 border border-slate-200 px-1.5 py-0.2 rounded font-mono font-bold">#${bill.billNumber}</span>` : ''}
+                ${pageCount > 1 ? `<span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded">${pageCount} Pages</span>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Amount & View Button -->
+          <div class="text-right shrink-0 flex flex-col items-end justify-between self-stretch space-y-2 pl-1">
+            <span class="text-sm sm:text-base font-black text-emerald-600">
+              ₹${bill.amount.toLocaleString()}
+            </span>
+            <button type="button" onclick="event.stopPropagation(); openViewModal('${bill.id}')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition flex items-center space-x-1">
+              <span>View</span>
+              <i data-lucide="chevron-right" class="w-3 h-3"></i>
+            </button>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function renderBills() {
+      const container = document.getElementById("bills-container");
+      const search = (document.getElementById("search-input") ? document.getElementById("search-input").value : "").toLowerCase().trim();
+
+      // MODE 1: SHOP FOLDERS LIST (When user taps "Shop Folders" tab and hasn't opened a specific shop yet)
+      if (currentBrowseMode === "shops" && !selectedShopFolder) {
+        const groups = {};
+        bills.forEach(b => {
+          const v = b.vendor || "Other";
+          if (search && !v.toLowerCase().includes(search)) return;
+          if (!groups[v]) groups[v] = { bills: [], total: 0, latestDate: b.date, thumb: b.imageUri };
+          groups[v].bills.push(b);
+          groups[v].total += (b.amount || 0);
+        });
+
+        const partyNames = Object.keys(groups);
+        document.getElementById("bills-count").textContent = bills.length;
+        const allTotal = bills.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+        document.getElementById("bills-total-amount").textContent = "₹" + allTotal.toLocaleString();
+
+        if (partyNames.length === 0) {
+          container.innerHTML = `
+            <div class="col-span-full bg-white rounded-2xl p-8 text-center border border-slate-200 text-slate-500 shadow-sm">
+              <i data-lucide="folder" class="w-10 h-10 text-slate-400 mx-auto mb-2"></i>
+              <p class="text-sm font-bold text-slate-800">No Shop Folders Found</p>
+            </div>
+          `;
+          lucide.createIcons();
+          return;
+        }
+
+        let folderHtml = "";
+        partyNames.forEach(shopName => {
+          const g = groups[shopName];
+          const escapedShop = shopName.replace(/'/g, "\\'");
+          folderHtml += `
+            <div onclick="openShopFolder('${escapedShop}')" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 hover:border-blue-500 transition cursor-pointer flex items-center justify-between gap-3 group">
+              <div class="flex items-center space-x-3.5 min-w-0 flex-1">
+                <div class="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 group-hover:bg-blue-600 group-hover:text-white transition">
+                  <i data-lucide="folder" class="w-6 h-6"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <h3 class="text-sm sm:text-base font-extrabold text-slate-900 leading-snug break-words">
+                    ${shopName}
+                  </h3>
+                  <p class="text-xs text-slate-500 font-semibold mt-0.5">
+                    ${g.bills.length} Bill${g.bills.length > 1 ? 's' : ''} &bull; Last: ${g.latestDate}
+                  </p>
+                </div>
+              </div>
+              <div class="text-right shrink-0 flex flex-col items-end space-y-1">
+                <span class="text-sm sm:text-base font-black text-emerald-600">₹${g.total.toLocaleString()}</span>
+                <span class="text-[11px] font-bold text-blue-600 flex items-center gap-0.5">
+                  <span>Open</span>
+                  <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </span>
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = folderHtml;
+        lucide.createIcons();
+        return;
+      }
+
+      // MODE 2: INSIDE A SPECIFIC SHOP FOLDER OR DATE-WISE BILLS LIST
+      const filtered = bills.filter(item => {
+        if (currentBrowseMode === "shops" && selectedShopFolder) {
+          if (item.vendor !== selectedShopFolder) return false;
+        } else {
+          // Date filter (only active in Date mode)
+          if (currentDateFilter === "today" && item.date !== "2026-11-06") return false;
+          if (currentDateFilter === "yesterday" && item.date !== "2026-11-05") return false;
+          if (currentDateFilter === "week" && (item.date < "2026-10-31" || item.date > "2026-11-06")) return false;
+          if (currentDateFilter === "month" && !item.date.startsWith("2026-11")) return false;
+          if (currentDateFilter === "range") {
+            const s = document.getElementById("range-start-date") ? document.getElementById("range-start-date").value : "";
+            const e = document.getElementById("range-end-date") ? document.getElementById("range-end-date").value : "";
+            if (s && item.date < s) return false;
+            if (e && item.date > e) return false;
+          } else if (!["all", "today", "yesterday", "week", "month", "range"].includes(currentDateFilter)) {
+            if (item.date !== currentDateFilter) return false;
+          }
+        }
+
+        // Search text filter
+        if (!search) return true;
+        const matchVendor = (item.vendor || "").toLowerCase().includes(search);
+        const matchDate = (item.date || "").includes(search);
+        const matchNum = (item.billNumber || "").toLowerCase().includes(search);
+        const matchAmount = (item.amount > 0 && String(item.amount).includes(search));
+        return matchVendor || matchDate || matchNum || matchAmount;
+      });
+
+      // Update counters & totals
+      document.getElementById("bills-count").textContent = filtered.length;
+      const totalRupees = filtered.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+      document.getElementById("bills-total-amount").textContent = "₹" + totalRupees.toLocaleString();
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full bg-white rounded-2xl p-8 text-center border border-slate-200 text-slate-500 shadow-sm">
+            <i data-lucide="receipt" class="w-10 h-10 text-slate-400 mx-auto mb-2"></i>
+            <p class="text-sm font-bold text-slate-800">No Bills Found</p>
+            <p class="text-xs text-slate-400 mt-1">Tap the green button above to take a photo of a bill!</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      let html = "";
+      filtered.forEach(bill => {
+        html += renderSingleBillCardHTML(bill);
+      });
+
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------------------
+    // VIEW / ZOOM MODAL & WHATSAPP
+    // -------------------------------------------------------------------------
+    function openViewModal(id) {
+      activeViewingBillId = id;
+      viewingModalPageIndex = 0; // Page 1
+      const bill = bills.find(b => b.id === id);
+      if (!bill) return;
+
+      // Ensure pages array exists
+      if (!bill.pages || bill.pages.length === 0) {
+        bill.pages = [bill.imageUri];
+      }
+
+      const titleText = bill.billNumber ? `${bill.vendor} (#${bill.billNumber})` : bill.vendor;
+      document.getElementById("view-modal-vendor").textContent = titleText;
+      document.getElementById("view-modal-date").textContent = `Date: ${bill.date} ${bill.billNumber ? '• Bill #' + bill.billNumber : ''}`;
+      document.getElementById("view-modal-amount").textContent = "₹" + bill.amount.toLocaleString();
+
+      renderViewerPages(bill);
+
+      document.getElementById("modal-view-bill").classList.remove("hidden");
+      lucide.createIcons();
+    }
+
+    function renderViewerPages(bill) {
+      const img = document.getElementById("view-modal-img");
+      const pageNumEl = document.getElementById("viewer-current-page-num");
+      const totalPagesEl = document.getElementById("viewer-total-pages-num");
+      const pillsContainer = document.getElementById("viewer-page-pills");
+
+      const pages = bill.pages && bill.pages.length > 0 ? bill.pages : [bill.imageUri];
+      const total = pages.length;
+
+      pageNumEl.textContent = viewingModalPageIndex + 1;
+      totalPagesEl.textContent = total;
+      img.src = pages[viewingModalPageIndex];
+
+      // Render Page Buttons: [Page 1] [Page 2] [Page 3]
+      pillsContainer.innerHTML = pages.map((_, idx) => {
+        const isActive = idx === viewingModalPageIndex;
+        return `
+          <button type="button" onclick="goToViewerPage(${idx})" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+            isActive ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300'
+          }">
+            P${idx + 1}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function goToViewerPage(index) {
+      if (!activeViewingBillId) return;
+      const bill = bills.find(b => b.id === activeViewingBillId);
+      if (!bill) return;
+
+      const pages = bill.pages && bill.pages.length > 0 ? bill.pages : [bill.imageUri];
+      if (index >= 0 && index < pages.length) {
+        viewingModalPageIndex = index;
+        renderViewerPages(bill);
+      }
+    }
+
+    function closeViewModal() {
+      document.getElementById("modal-view-bill").classList.add("hidden");
+      activeViewingBillId = null;
+    }
+
+    function deleteCurrentBill() {
+      if (!activeViewingBillId) return;
+      bills = bills.filter(b => b.id !== activeViewingBillId);
+      saveToStorage();
+      closeViewModal();
+      renderBills();
+    }
+
+    async function shareOnWhatsAppWithImage() {
+      if (!activeViewingBillId) return;
+      const bill = bills.find(b => b.id === activeViewingBillId);
+      if (!bill) return;
+
+      const shareText = `*Wholesaler Bill Photo / पर्चा*\n` +
+        `🏪 Party: *${bill.vendor}*\n` +
+        `💰 Amount: *₹${bill.amount.toLocaleString()}*\n` +
+        `📅 Date: ${bill.date}\n` +
+        `_Saved safely in BillKhata_`;
+
+      const btn = document.getElementById("share-btn-text");
+
+      // 1. If mobile browser supports Web Share API with image file
+      if (navigator.share && navigator.canShare && bill.imageUri) {
+        try {
+          // Convert base64 to File blob
+          const res = await fetch(bill.imageUri);
+          const blob = await res.blob();
+          const file = new File([blob], `Bill_${bill.vendor.replace(/\s+/g, '_')}_${bill.date}.png`, { type: 'image/png' });
+
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: `${bill.vendor} Bill`,
+              text: shareText,
+              files: [file]
+            });
+            if (btn) btn.textContent = "Shared Successfully ✓";
+            setTimeout(() => { if (btn) btn.textContent = "Share on WhatsApp (फोटो सहित)"; }, 2500);
+            return;
+          }
+        } catch (e) {
+          console.warn("Native file share fallback", e);
+        }
+      }
+
+      // 2. Browser fallback: Automatically download the bill photo and open WhatsApp with pre-filled details
+      downloadBillPhoto();
+      if (btn) btn.textContent = "Photo Saved! Opening WhatsApp...";
+
+      setTimeout(() => {
+        const encoded = encodeURIComponent(shareText);
+        window.open(`https://api.whatsapp.com/send?text=${encoded}`, "_blank");
+        if (btn) btn.textContent = "Share on WhatsApp (फोटो सहित)";
+      }, 700);
+    }
+
+    function downloadBillPhoto() {
+      if (!activeViewingBillId) return;
+      const bill = bills.find(b => b.id === activeViewingBillId);
+      if (!bill) return;
+
+      const pages = bill.pages && bill.pages.length > 0 ? bill.pages : [bill.imageUri];
+      const targetImg = pages[viewingModalPageIndex] || pages[0];
+
+      const link = document.createElement("a");
+      link.href = targetImg;
+      link.download = `Bill_${bill.vendor.replace(/[^a-zA-Z0-9]/g, '_')}_Page${viewingModalPageIndex + 1}_${bill.date}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function shareOnWhatsApp() {
+      shareOnWhatsAppWithImage();
+    }
+  </script>
+</body>
+</html>
