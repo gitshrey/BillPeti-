@@ -1,4 +1,4 @@
-name: Build BillKhata Android APK & Play Store AAB
+name: Build BillKhata Android APK
 
 on:
   push:
@@ -7,60 +7,75 @@ on:
 
 jobs:
   build-android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Set up JDK 17 for Android Gradle
-        uses: actions/setup-java@v4
+      - name: Set up JDK 21 for Android Gradle
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Capacitor & Generate Android Native Project
+      - name: Prepare Web Assets & Self-Heal Folder Structure
+        run: |
+          mkdir -p www
+          if [ -f "index.html" ] && [ ! -f "www/index.html" ]; then
+            cp index.html www/index.html
+          fi
+          FOUND_HTML=$(find . -maxdepth 3 -name "index.html" | head -n 1)
+          if [ -n "$FOUND_HTML" ] && [ ! -f "www/index.html" ]; then
+            cp "$FOUND_HTML" www/index.html
+          fi
+          cat << 'EOF' > package.json
+          {
+            "name": "billkhata-android",
+            "version": "1.0.0",
+            "description": "BillKhata - Shop Bill Organizer",
+            "main": "www/index.html",
+            "dependencies": {
+              "@capacitor/android": "6.2.0",
+              "@capacitor/core": "6.2.0"
+            },
+            "devDependencies": {
+              "@capacitor/cli": "6.2.0"
+            }
+          }
+          EOF
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.billkhata.shopapp",
+            "appName": "BillKhata",
+            "webDir": "www",
+            "bundledWebRuntime": false
+          }
+          EOF
+
+      - name: Install Capacitor & Generate Android Project
         run: |
           npm install
-          if [ ! -d "android" ]; then
-            npx cap add android
-          fi
+          rm -rf android
+          npx cap add android
           npx cap sync android
 
-      - name: Configure Android Camera & Storage Permissions
-        run: |
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          if ! grep -q "android.permission.CAMERA" "$MANIFEST"; then
-            sed -i 's|<application|<uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />\n    <application|' "$MANIFEST"
-          fi
-
-      - name: Build Installable APK (For Direct Install from GitHub)
+      - name: Build Installable Android APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
-      - name: Build Play Store Bundle AAB
-        run: |
-          cd android
-          ./gradlew bundleRelease
-
-      - name: Upload Installable BillKhata APK Artifact
+      - name: Upload BillKhata Installable APK
         uses: actions/upload-artifact@v4
         with:
           name: BillKhata-Installable-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Upload Play Store AAB Bundle Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: BillKhata-PlayStore-AAB
-          path: android/app/build/outputs/bundle/release/app-release.aab
