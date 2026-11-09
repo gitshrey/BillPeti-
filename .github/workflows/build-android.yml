@@ -88,8 +88,6 @@ jobs:
               m = f.read()
           perms = """    <uses-permission android:name="android.permission.CAMERA" />
               <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
           """
           if "android.permission.CAMERA" not in m:
               m = m.replace("<application", perms + "    <application", 1)
@@ -164,8 +162,28 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
 
+      - name: Rename APK to BillKhata.apk
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/debug/app-debug.apk dist/BillKhata.apk
+
       - name: Upload BillKhata Installable APK
         uses: actions/upload-artifact@v4
         with:
           name: BillKhata-Installable-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: dist/BillKhata.apk
+
+      - name: Create GitHub Release with direct BillKhata.apk download
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        with:
+          tag_name: v2.${{ github.run_number }}
+          name: BillKhata v2.${{ github.run_number }}
+          body: |
+            ### 📱 BillKhata (बिल खाता) Installable APK
+            Download **BillKhata.apk** directly below and install it on your Android phone.
+            - Updates seamlessly over existing versions without data loss.
+            - 100% Offline, Safe & Private.
+          files: dist/BillKhata.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
