@@ -1,6 +1,6 @@
 # 📦 BillPeti — Your Digital Bill Storage
 
-\[suspicious link removed\]
+
 [Architecture](https://www.google.com/search?q=./index.html)
 [Platform](https://www.google.com/search?q=./.github/workflows/build-android.yml)
 [](#multilingual-support)
