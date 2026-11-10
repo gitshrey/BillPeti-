@@ -153,17 +153,7 @@ jobs:
           g_txt = re.sub(r'versionCode\s+\d+', f'versionCode {new_ver_code}', g_txt)
           g_txt = re.sub(r'versionName\s+"[^"]+"', f'versionName "2.{run_num}"', g_txt)
 
-          signing_cfg = """    signingConfigs {
-        release {
-            storeFile file('billpeti-release.keystore')
-            storePassword 'BillPeti2026!'
-            keyAlias 'billpeti_release_key'
-            keyPassword 'BillPeti2026!'
-            v1SigningEnabled true
-            v2SigningEnabled true
-        }
-    }
-"""
+          signing_cfg = "    signingConfigs { release { storeFile file('billpeti-release.keystore'); storePassword 'BillPeti2026!'; keyAlias 'billpeti_release_key'; keyPassword 'BillPeti2026!'; v1SigningEnabled true; v2SigningEnabled true } }\n"
           if "billpeti-release.keystore" not in g_txt:
               g_txt = g_txt.replace("buildTypes {", signing_cfg + "    buildTypes {", 1)
               g_txt = re.sub(
