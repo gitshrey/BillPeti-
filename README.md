@@ -28,7 +28,7 @@
 
 ## 📲 Downloading & Installing the Android APK
 
-1. Open the **\[suspicious link removed\]** tab of this repository (or the latest run under the **\[suspicious link removed\]** tab).
+1. Open the releases tab of this repository .
 2. Download **`BillPeti.apk`** to your Android phone.
 3. Tap to install. Because updates are signed with a persistent production release certificate, new versions install cleanly over existing versions without losing saved bills.
 
