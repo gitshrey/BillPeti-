@@ -1,18 +1,37 @@
-# BillKhata (बिल खाता) - Android App Repository
+# 📦 BillPeti — Your Digital Bill Storage
 
-This repository contains the complete **BillKhata** Android application, pre-configured with **Capacitor 6** and an automated **GitHub Actions APK & Google Play Store AAB Builder**.
+\[suspicious link removed\]
+[Architecture](https://www.google.com/search?q=./index.html)
+[Platform](https://www.google.com/search?q=./.github/workflows/build-android.yml)
+[](#multilingual-support)
 
-## 1. How to Build & Install the APK Directly from GitHub (No Coding Needed)
+**BillPeti (बिल पेटी)** is an offline-first Android digital bill vault and party-wise invoice organizer built for Indian wholesalers, retailers, and shopkeepers. It keeps purchase bills, multi-page *parchas*, party folders, and overall party payment balances organized in a private local database—without cluttering the phone's personal photo gallery or uploading sensitive business records to external cloud servers.
 
-1. Create a free account at [github.com](https://github.com) and create a new repository named `billkhata`.
-2. Upload all files from this folder (including `.github/workflows/build-android.yml`, `www/index.html`, `package.json`, and `capacitor.config.json`) to your repository.
-3. Click the **Actions** tab at the top of your GitHub repository.
-4. GitHub will automatically run **"Build BillKhata Android APK & Play Store AAB"** (takes ~3 minutes).
-5. Once finished, click on the completed workflow run and download **`BillKhata-Installable-APK`** under the **Artifacts** section.
-6. Unzip it on your phone and tap `app-debug.apk` to install **BillKhata** on your Android device.
+## ✨ Key Features
 
-## 2. How to Publish on Google Play Store
+* **📸 Multi-Page Bill & Parcha Capture**: Snap or import multi-page invoices with instant client-side image compression, watermarks, pinch-to-zoom inspection, and full-screen viewing.
+* **📁 Party-Wise Folders & Balance Tracker**: Automatically groups bills by wholesaler or shop name. Includes an optional per-party **Paid & Balance Left** toggle so merchants can track overall payments made and remaining balance due without complex ledger overhead.
+* **🔍 Instant Search & Smart Date Filters**: Filter bills across the home dashboard, full-screen view, or inside specific party folders by note, amount, date presets (*Today, Yesterday, Last 7 Days, This Month*), or custom date ranges.
+* **💬 Native WhatsApp Image + Caption Sharing**: Shares multi-page JPEG bill photos alongside structured party, amount, date, and note details directly to WhatsApp via Android `FileProvider` intents.
+* **📊 Full-Fidelity Excel (CSV) Backup & Restore**: One-tap offline backup and restore (including embedded bill images) exported directly to the device's `Downloads` folder, paired with configurable **Weekly / Monthly Smart Backup Reminders**.
+* **🌐 8 Indian Languages**: Full native interface localization in English, हिन्दी (Hindi), मराठी (Marathi), ગુજરાતી (Gujarati), ਪੰਜਾਬੀ (Punjabi), বাংলা (Bengali), தமிழ் (Tamil), and తెలుగు (Telugu).
+* **🔒 100% Offline & Private by Design**: Powered by persistent `IndexedDB` + `localStorage` storage. Zero cloud tracking, zero external API dependencies, and zero personal gallery mixing.
 
-1. Create a developer account at [Google Play Console](https://play.google.com/console) ($25 one-time registration fee).
-2. Generate a signing keystore (using Android Studio -> *Build* -> *Generate Signed Bundle / APK* -> *Android App Bundle*).
-3. Upload the signed `.aab` file to **Production** or **Internal Testing** in Google Play Console.
+## 🛠️ Tech Stack & Architecture
+
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Frontend UI** | HTML5, Tailwind CSS, Lucide Icons | Responsive mobile-first fintech UI with dark mode support |
+| **Storage Engine** | IndexedDB (`BillPetiUserDB_v2`) + LocalStorage | High-capacity offline persistence for multi-page compressed bill photos |
+| **Native Runtime** | Capacitor 6 Android + Custom Java Bridge | Native `FileProvider` WhatsApp image sharing, hardware back-button routing, and `MediaStore` Downloads export |
+| **CI/CD Pipeline** | GitHub Actions (`ubuntu-24.04`, JDK 21, Node 22) | Automated Gradle `assembleRelease` build signed with RSA-2048 v1/v2 production keystore |
+
+## 📲 Downloading & Installing the Android APK
+
+1. Open the **\[suspicious link removed\]** tab of this repository (or the latest run under the **\[suspicious link removed\]** tab).
+2. Download **`BillPeti.apk`** to your Android phone.
+3. Tap to install. Because updates are signed with a persistent production release certificate, new versions install cleanly over existing versions without losing saved bills.
+
+## 🔐 Privacy & Security Notice
+
+BillPeti operates **100% offline**. All bill photos, notes, amounts, and party balances are processed and stored locally on your device. No personal or business data is ever transmitted to external servers.
