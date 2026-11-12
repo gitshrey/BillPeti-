@@ -202,32 +202,37 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Copy Signed Release APK to BillStore.apk
+      - name: Copy Signed Release APK (Versioned + Latest)
         run: |
           mkdir -p dist
           APK_PATH=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
           echo "Found signed release APK: $APK_PATH"
-          cp "$APK_PATH" dist/BillStore.apk
+          cp "$APK_PATH" "dist/BillStore-v2.${{ github.run_number }}.apk"
+          cp "$APK_PATH" "dist/BillStore.apk"
 
       - name: Upload Bill Store Installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: BillStore-Installable-APK
-          path: dist/BillStore.apk
+          name: BillStore-v2.${{ github.run_number }}-APK
+          path: |
+            dist/BillStore-v2.${{ github.run_number }}.apk
+            dist/BillStore.apk
 
-      - name: Create GitHub Release with direct BillStore.apk download
+      - name: Create Versioned GitHub Release with BillStore-v2.X.apk and BillStore.apk
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         continue-on-error: true
         with:
           tag_name: v2.${{ github.run_number }}
-          name: Bill Store v2.${{ github.run_number }}
+          name: Bill Store — Version v2.${{ github.run_number }}
           body: |
-            ### 📦 Bill Store (बिल स्टोर) — Your digital bill storage
-            Download **BillStore.apk** directly below and install it on your Android phone.
-            - Signed Production Release APK (Non-debuggable, RSA-2048 v1+v2 signed).
-            - Updates seamlessly over existing Bill Store versions without data loss.
-            - 100% Offline, Safe & Private.
-          files: dist/BillStore.apk
+            ## 📦 Bill Store — Version `v2.${{ github.run_number }}`
+            - **App Version:** `v2.${{ github.run_number }}` (Build #${{ github.run_number }})
+            - **Versioned APK File:** `BillStore-v2.${{ github.run_number }}.apk`
+            - **Signing:** Production RSA-2048 Release Keystore (`v1` + `v2` signed, non-debuggable)
+            - **Upgrade Safe:** Installs cleanly over previous Bill Store versions without losing saved bills or party balances.
+          files: |
+            dist/BillStore-v2.${{ github.run_number }}.apk
+            dist/BillStore.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
